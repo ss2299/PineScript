@@ -1,0 +1,57 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © ss2299
+
+//@version=5
+indicator("Engulfing Candle Detector", overlay=true)
+
+// input extention bar numbers
+box_extention_num = input.int(30, title='Number of Extention box', options = [0, 10, 20, 30, 40, 50, 100, 200])
+
+box_extention_price1 = input.float(50.0, title='Extention box price 1', options = [0, 23.6, 38.2, 50.0, 61.8, 76.4, 100])
+box_extention_price2 = input.float(61.8, title='Extention box price 2', options = [0, 23.6, 38.2, 50.0, 61.8, 76.4, 100])
+
+// input enable/disable of 161.8 additional line
+flag_extention_line = input.bool(false, 'Additional box with 161.8')
+
+
+// input colors
+color_bullish_border = input.color(color.new(color.green, 50), 'Engulfing Border', 'tooltip', 'inline')
+color_bullish_bg = input.color(color.new(color.green, 60), 'Engulfing Background', 'tooltip', 'inline')
+color_bearish_border = input.color(color.new(color.red, 50), 'Bearish Border', 'tooltip', 'inline')
+color_bearish_bg = input.color(color.new(color.red, 60), 'Bearish Background', 'tooltip', 'inline')
+
+var box box_extended = na
+var box box_candle = na
+var box box_161 = na
+
+upcandle1 = close[1] > open[1]
+dncandle1 = open[1] > close[1]
+upcandle2 = close[2] > open[2]
+dncandle2 = open[2] > close[2]
+isbullish = close[2] >= open[1] and open[2] < close[1]
+isbearish = close[2] <= open[1] and open[2] > close[1]
+
+if upcandle1 and dncandle2 and isbullish
+    // Bullish candle
+    disptop1 = (close[1] - open[1]) * box_extention_price2 / 100 + open[1]
+    dispbottom1 = (close[1] - open[1]) * box_extention_price1 / 100 + open[1]
+
+    box_extended := box.new(bar_index[1], disptop1, bar_index + box_extention_num, dispbottom1, border_color = na, bgcolor =color_bullish_bg)
+    box_candle := box.new(bar_index[2], close[1], bar_index, open[1], border_color = color_bullish_border , bgcolor =na)
+
+    if flag_extention_line
+        price161 = (close[1] - open[1]) * 161.8 / 100 + open[1]
+        box_161 := box.new(bar_index[2], price161, bar_index + box_extention_num, open[1], border_color = color_bullish_border , bgcolor =na, border_style = line.style_dashed)
+
+
+if dncandle1 and upcandle2 and isbearish
+    // Bearish candle
+    disptop1 = open[1] - (open[1] - close[1]) * box_extention_price2 / 100
+    dispbottom1 = open[1] - (open[1] - close[1]) * box_extention_price1 / 100
+
+    box_extended := box.new(bar_index[1], disptop1, bar_index + box_extention_num, dispbottom1, border_color = na, bgcolor =color_bearish_bg)
+    box_candle := box.new(bar_index[2], close[1], bar_index, open[1], border_color = color_bearish_border , bgcolor =na)
+
+    if flag_extention_line
+        price161 = open[1] - (open[1] - close[1]) * 161.8 / 100
+        box_161 := box.new(bar_index[2], price161, bar_index + box_extention_num, open[1], border_color = color_bearish_border , bgcolor =na, border_style = line.style_dashed)
